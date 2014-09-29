@@ -146,7 +146,7 @@ def abundancia_form(request):
 @login_required(login_url='/login/')
 def ab2matrix_form(request):
     profile = User.objects.select_related().get(id=request.user.pk).profile
-    resultFiles = File.objects.all().filter(profile = profile).filter(ext='result')
+    resultFiles = File.objects.all().filter(profile = profile).filter(ext='results')
     return render(request, 'ab2matrix_form.html', {'resultList': resultFiles})
 
 
