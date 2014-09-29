@@ -224,7 +224,7 @@ def run_abundancia(request):
         reads_1.append(File.objects.get(id=int(rr)).fileUpload.path)
     #LEFT READS FILE PATH
     lreads_id = request.POST.getlist('lreads', '')
-    for lr in rreads_id:
+    for lr in lreads_id:
         reads_2.append(File.objects.get(id=int(lr)).fileUpload.path)
     ab = Align_and_estimate_abundance(mapeador=1, tipo=1, profile=profile)
     ab.save()
