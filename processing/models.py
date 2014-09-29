@@ -110,7 +110,7 @@ class Align_and_estimate_abundance(models.Model):
         self.name = "Experimento %s" % self.id
         self.save()
         tmp_dir = "/tmp/aln%s"  % randint(1, 1000000)
-        comando = "$TRINITY_HOME/util/align_and_estimate_abundance.pl --thread_count %s  --output_dir %s  --transcripts %s --left %s --right %s --seqType fq --est_method RSEM --aln_method bowtie --prep_reference" % (settings.CORES, tmp_dir, reference, reads_1, reads_2)
+        comando = "$TRINITY_HOME/util/align_and_estimate_abundance.pl --thread_count %s  --output_dir %s  --transcripts %s --left %s --right %s --seqType fq --est_method RSEM --aln_method bowtie --prep_reference" % (settings.CORES, tmp_dir, reference, " ".join(reads_1), " ".join(reads_2))
         p1 = Proceso(comando=str(comando), profile=self.profile)
         p1.save()
         self.procesos.add(p1)
