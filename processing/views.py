@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from forms import *
 from processing.models import *
 from django.shortcuts import render
@@ -21,11 +22,13 @@ def auth_view(request):
         login(request, user)
         return render(request, 'home.html')
     else:
-        return render(request, 'error_login.html')
+        error = 'No se ha podido acceder, intente nuevamente'
+        return render(request, 'error.html', {'error':error})
  
 
 def error_login(request):
-    return render(request, 'error_login.html')
+    error = 'El ususario o la contraseña son incorrectos'
+    return render(request, 'error.html', {'error':error})
 
 
 def log_in(request):
@@ -34,7 +37,8 @@ def log_in(request):
 
 def log_out(request):
     logout(request)
-    return render(request, 'logout.html')
+    success = 'Ha cerrado sesión satisfactoriamente.'
+    return render(request, 'success.html',{'success': success})
 
 
 #  ############ REGISTRATION ###############
@@ -42,7 +46,7 @@ def register_user(request):
     if request.POST:
         email = request.POST.get('email', '')
         password1 = request.POST.get('password1', '')
-        password2 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
         if password1 == password2:
             new_user = User(username=email, email=email)
             new_user.set_password(password1)
@@ -53,9 +57,11 @@ def register_user(request):
                                   lastName=request.POST.get('lastName', ''),
                                   )
             new_profile.save()
-            return render(request, 'registration_success.html')
+            success = 'Se ha registrado satisfactoriamente.'
+            return render(request, 'success.html',{'success': success})
         else:
-            return render(request, 'registration_error.html')
+            error = 'Las contrasenas no son iguales'
+            return render(request, 'error.html', {'error': error})
     else:
         return render(request, 'register.html')
 
@@ -72,7 +78,8 @@ def filesubmit(request):
         ext = str(request.FILES['file']).split(".")[-1]
         instance = File(fileUpload=request.FILES['file'], description=desc, profile=p,ext=ext)
         instance.save()
-        return HttpResponseRedirect('/files/success/')
+        success = 'El archivo se ha guardado satisfactoriamente.'
+        return render(request, 'success.html',{'success': success})
         #  except Exception as e:
         #    print e
     else:
@@ -86,12 +93,13 @@ def delete_file(request, fileID):
         profile = ser = User.objects.select_related().get(id=request.user.pk).profile
         if file2del.profile == profile:
             file2del.delete()
-            return render(request, 'delete_file_success.html')
+            success = 'Se ha eliminado el archivo satisfactoriamente.'
+            return render(request, 'success.html',{'success': success})
         else:
-            e = 'Este archivo no es de tu propiedad'
-            return render(request, 'delete_file_error.html', {'error': e})
+            error = 'Este archivo no le pertenece'
+            return render(request, 'error.html', {'error':error})
     except Exception, e:
-        return render(request, 'delete_file_error.html', {'error': e})
+        return render(request, 'error.html', {'error': e})
 
 
 @login_required(login_url='/login/')
@@ -115,9 +123,11 @@ def editfile(request):
         instance = File.objects.get(id=int(fileID))
         instance.description = desc
         instance.save()
-        return render(request, 'editfile_success.html')
+        success = 'Se ha editado el archivo satisfactoriamente.'
+        return render(request, 'success.html',{'success': success})
     except Exception, e:
-        return render(request, 'editfile_error.html', {'error': e})
+        error = 'No se pudieron guardar los datos'
+        return render(request, 'error.html', {'error':error})
 
 
 #  ############ PAGE RENDER ###############
@@ -126,29 +136,31 @@ def home(request):
 
 
 @login_required(login_url='/login/')
-def bowtie_form(request):
+def abundancia_form(request):
     profile = User.objects.select_related().get(id=request.user.pk).profile
     fastaFiles = File.objects.all().filter(profile = profile).filter(ext__in=['fasta','fa'])
     fastqFiles = File.objects.all().filter(profile = profile).filter(ext__in=['fastq','fq'])
-    return render(request, 'bowtie_form.html', {'fastqList': fastqFiles, 'fastaList': fastaFiles})
+    return render(request, 'abundancia_form.html', {'fastqList': fastqFiles, 'fastaList': fastaFiles})
 
 
 @login_required(login_url='/login/')
-def bwa_form(request):
+def ab2matrix_form(request):
     profile = User.objects.select_related().get(id=request.user.pk).profile
-    fastaFiles = File.objects.all().filter(profile = profile).filter(ext='fasta')
-    fastqFiles = File.objects.all().filter(profile = profile).filter(ext='fastq')
-    return render(request, 'bwa_form.html', {'fastqList': fastqFiles, 'fastaList': fastaFiles})
+    resultFiles = File.objects.all().filter(profile = profile).filter(ext='results')
+    return render(request, 'ab2matrix_form.html', {'resultList': resultFiles})
 
 
 @login_required(login_url='/login/')
 def diffexp_form(request):
-    return render(request, 'diffexp_form.html')
+    profile = User.objects.select_related().get(id=request.user.pk).profile
+    matrixFiles = File.objects.all().filter(profile = profile).filter(ext='matrix')
+    return render(request, 'diffexp_form.html', {'matrixList': matrixFiles})
 
 
 @login_required(login_url='/login/')
 def upload_success(request):
-    return render(request, 'upload_success.html')
+    success = 'Se ha subido el archivo satisfactoriamente.'
+    return render(request, 'success.html',{'success': success})
 
 
 @login_required(login_url='/login/')
@@ -188,6 +200,65 @@ def download_file(request, id_file):
     response['X-Sendfile'] = file_path
     return response
 
+
+@login_required(login_url='/login/')
+def run_abundancia(request):
+    #REFERENCE FILE PATH
+    reference_id = request.POST.get('reference', '')
+    reference_path = File.objects.get(id=int(reference_id)).fileUpload.path
+    #CONFIG
+    type_id = request.POST.get('type', '')
+    mapping_id = request.POST.get('mapping', '')
+    profile = User.objects.select_related().get(id=request.user.pk).profile
+
+    reads_1 = []
+    reads_2 = []
+    #RIGHT READS FILE PATH
+    rreads_id = request.POST.getlist('rreads', '')
+    for rr in rreads_id:
+        reads_1.append(File.objects.get(id=int(rr)).fileUpload.path)
+    #LEFT READS FILE PATH
+    lreads_id = request.POST.getlist('lreads', '')
+    for lr in rreads_id:
+        reads_2.append(File.objects.get(id=int(lr)).fileUpload.path)
+    ab = Align_and_estimate_abundance(mapeador=1, tipo=1, profile=profile)
+    ab.save()
+
+    ab.run(reference=reference_path, reads_1=reads_1, reads_2=reads_2)
+    #Falta el response
+    success = 'El proceso se ha puesto en la cola de espera.'
+    return render(request, 'success.html', {'success': success})
+
+
+@login_required(login_url='/login/')
+def run_ab2matrix(request):
+    #Result FILE PATH
+    result_paths = []
+    result_id = request.POST.getlist('result', '')
+    for r in result_id:
+        result_paths.append(File.objects.get(id=int(r)).fileUpload.path)
+    #CONFIG
+    profile = User.objects.select_related().get(id=request.user.pk).profile
+
+    ab = Abundance_to_Matrix(profile=profile)
+    ab.save()
+    ab.run(files=result_paths)
+    success = 'El proceso se ha puesto en la cola de espera.'
+    return render(request, 'success.html', {'success': success})
+
+@login_required(login_url='/login/')
+def run_expdiff(request):
+    #Result FILE PATH
+    matrix_id = request.POST.get('matrix', '')
+    matrix_path = File.objects.get(id=int(matrix_id)).fileUpload.path
+    #CONFIG
+    profile = User.objects.select_related().get(id=request.user.pk).profile
+
+    d = Differential_Expression(profile=profile)
+    d.save()
+    d.run(matrix=matrix_path)
+    success = 'El proceso se ha puesto en la cola de espera.'
+    return render(request, 'success.html', {'success': success})
 
 @login_required(login_url='/login/')
 def mapping(request):
