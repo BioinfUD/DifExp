@@ -18,9 +18,9 @@
             <form id='formpaired' action="/run/abundancia/" method="post">
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="id_reference">RArchivo de referencia:</label>
+                    <label for="id_reference">Archivo de referencia:</label>
                     <select class="form-control" id="id_reference" name="reference"  required>
-                        <option value="">seleccone un archivo</option>
+                        <option value="">seleccione un archivo</option>
                         {% for f in fastaList %}
                             <option value='{{f.id}}'>{{f.fileUpload.name}}</option>
                         {% endfor %}
