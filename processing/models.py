@@ -191,11 +191,11 @@ class Differential_Expression(models.Model):
         while t1.isAlive():
             sleep(1)
         result = subprocess.check_output("ls -1 %s/*pdf" % out_dir, shell=True)
-        f1 = File(fileUpload=Django_File(open(out_dir + "/" + result.strip())), description="PDF output " + self.name, profile=self.profile, ext="pdf")
+        f1 = File(fileUpload=Django_File(open(result.strip())), description="PDF output " + self.name, profile=self.profile, ext="pdf")
         f1.save()
         self.out_results = f1
         result = subprocess.check_output("ls -1 %s/*results" % out_dir, shell=True)
-        f1 = File(fileUpload=Django_File(open(out_dir + "/" + result.strip())), description="Data output " + self.name, profile=self.profile, ext="csv")
+        f1 = File(fileUpload=Django_File(open(result.strip())), description="Data output " + self.name, profile=self.profile, ext="csv")
         f1.save()
         self.out_params = f1
         self.save()
