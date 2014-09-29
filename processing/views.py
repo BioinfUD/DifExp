@@ -37,7 +37,8 @@ def log_in(request):
 
 def log_out(request):
     logout(request)
-    return render(request, 'logout.html')
+    success = 'Ha cerrado sesión satisfactoriamente.'
+    return render(request, 'success.html',{'success': success})
 
 
 #  ############ REGISTRATION ###############
@@ -45,7 +46,7 @@ def register_user(request):
     if request.POST:
         email = request.POST.get('email', '')
         password1 = request.POST.get('password1', '')
-        password2 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
         if password1 == password2:
             new_user = User(username=email, email=email)
             new_user.set_password(password1)
@@ -56,6 +57,7 @@ def register_user(request):
                                   lastName=request.POST.get('lastName', ''),
                                   )
             new_profile.save()
+            success = 'Se ha registrado satisfactoriamente.'
             return render(request, 'success.html',{'success': success})
         else:
             error = 'Las contrasenas no son iguales'
@@ -121,7 +123,8 @@ def editfile(request):
         instance = File.objects.get(id=int(fileID))
         instance.description = desc
         instance.save()
-        return render(request, 'editfile_success.html')
+        success = 'Se ha editado el archivo satisfactoriamente.'
+        return render(request, 'success.html',{'success': success})
     except Exception, e:
         error = 'No se pudieron guardar los datos'
         return render(request, 'error.html', {'error':error})
@@ -156,7 +159,8 @@ def diffexp_form(request):
 
 @login_required(login_url='/login/')
 def upload_success(request):
-    return render(request, 'upload_success.html')
+    success = 'Se ha subido el archivo satisfactoriamente.'
+    return render(request, 'success.html',{'success': success})
 
 
 @login_required(login_url='/login/')
