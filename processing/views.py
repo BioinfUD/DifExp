@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from forms import *
 from processing.models import *
 from django.shortcuts import render
@@ -126,24 +127,25 @@ def home(request):
 
 
 @login_required(login_url='/login/')
-def bowtie_form(request):
+def abundancia_form(request):
     profile = User.objects.select_related().get(id=request.user.pk).profile
     fastaFiles = File.objects.all().filter(profile = profile).filter(ext__in=['fasta','fa'])
     fastqFiles = File.objects.all().filter(profile = profile).filter(ext__in=['fastq','fq'])
-    return render(request, 'bowtie_form.html', {'fastqList': fastqFiles, 'fastaList': fastaFiles})
+    return render(request, 'abundancia_form.html', {'fastqList': fastqFiles, 'fastaList': fastaFiles})
 
 
 @login_required(login_url='/login/')
-def bwa_form(request):
+def ab2matrix_form(request):
     profile = User.objects.select_related().get(id=request.user.pk).profile
-    fastaFiles = File.objects.all().filter(profile = profile).filter(ext='fasta')
-    fastqFiles = File.objects.all().filter(profile = profile).filter(ext='fastq')
-    return render(request, 'bwa_form.html', {'fastqList': fastqFiles, 'fastaList': fastaFiles})
+    resultFiles = File.objects.all().filter(profile = profile).filter(ext='result')
+    return render(request, 'ab2matrix_form.html', {'resultList': resultFiles})
 
 
 @login_required(login_url='/login/')
 def diffexp_form(request):
-    return render(request, 'diffexp_form.html')
+    profile = User.objects.select_related().get(id=request.user.pk).profile
+    matrixFiles = File.objects.all().filter(profile = profile).filter(ext='matrix')
+    return render(request, 'diffexp_form.html', {'matrixList': matrixFiles})
 
 
 @login_required(login_url='/login/')
@@ -188,6 +190,65 @@ def download_file(request, id_file):
     response['X-Sendfile'] = file_path
     return response
 
+
+@login_required(login_url='/login/')
+def run_abundancia(request):
+    #REFERENCE FILE PATH
+    reference_id = request.POST.get('reference', '')
+    reference_path = File.objects.get(id=int(reference_id)).fileUpload.path
+    #CONFIG
+    type_id = request.POST.get('type', '')
+    mapping_id = request.POST.get('mapping', '')
+    profile = User.objects.select_related().get(id=request.user.pk).profile
+
+    reads_1 = []
+    reads_2 = []
+    #RIGHT READS FILE PATH
+    rreads_id = request.POST.getlist('rreads', '')
+    for rr in rreads_id:
+        reads_1.append(File.objects.get(id=int(rr)).fileUpload.path)
+    #LEFT READS FILE PATH
+    lreads_id = request.POST.getlist('lreads', '')
+    for lr in rreads_id:
+        reads_2.append(File.objects.get(id=int(lr)).fileUpload.path)
+    ab = Align_and_estimate_abundance(mapeador=1, tipo=1, profile=profile)
+    ab.save()
+
+    ab.run(reference=reference_path, reads_1=reads_1, reads_2=reads_2)
+    #Falta el response
+    success = 'El proceso se ha puesto en la cola de espera.'
+    return render(request, 'success.html', {'success': success})
+
+
+@login_required(login_url='/login/')
+def run_ab2matrix(request):
+    #Result FILE PATH
+    result_paths = []
+    result_id = request.POST.getlist('result', '')
+    for r in result_id:
+        result_paths.append(File.objects.get(id=int(r)).fileUpload.path)
+    #CONFIG
+    profile = User.objects.select_related().get(id=request.user.pk).profile
+
+    ab = Abundance_to_Matrix(profile=profile)
+    ab.save()
+    ab.run(files=result_paths)
+    success = 'El proceso se ha puesto en la cola de espera.'
+    return render(request, 'success.html', {'success': success})
+
+@login_required(login_url='/login/')
+def run_expdiff(request):
+    #Result FILE PATH
+    matrix_id = request.POST.get('matrix', '')
+    matrix_path = File.objects.get(id=int(matrix_id)).fileUpload.path
+    #CONFIG
+    profile = User.objects.select_related().get(id=request.user.pk).profile
+
+    d = Differential_Expression(profile=profile)
+    d.save()
+    d.run(matrix=matrix_path)
+    success = 'El proceso se ha puesto en la cola de espera.'
+    return render(request, 'success.html', {'success': success})
 
 @login_required(login_url='/login/')
 def mapping(request):
