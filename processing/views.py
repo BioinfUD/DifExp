@@ -22,11 +22,13 @@ def auth_view(request):
         login(request, user)
         return render(request, 'home.html')
     else:
-        return render(request, 'error_login.html')
+        error = 'No se ha podido acceder, intente nuevamente'
+        return render(request, 'error.html', {'error':error})
  
 
 def error_login(request):
-    return render(request, 'error_login.html')
+    error = 'El ususario o la contraseña son incorrectos'
+    return render(request, 'error.html', {'error':error})
 
 
 def log_in(request):
@@ -54,9 +56,10 @@ def register_user(request):
                                   lastName=request.POST.get('lastName', ''),
                                   )
             new_profile.save()
-            return render(request, 'registration_success.html')
+            return render(request, 'success.html',{'success': success})
         else:
-            return render(request, 'registration_error.html')
+            error = 'Las contrasenas no son iguales'
+            return render(request, 'error.html', {'error': error})
     else:
         return render(request, 'register.html')
 
@@ -73,7 +76,8 @@ def filesubmit(request):
         ext = str(request.FILES['file']).split(".")[-1]
         instance = File(fileUpload=request.FILES['file'], description=desc, profile=p,ext=ext)
         instance.save()
-        return HttpResponseRedirect('/files/success/')
+        success = 'El archivo se ha guardado satisfactoriamente.'
+        return render(request, 'success.html',{'success': success})
         #  except Exception as e:
         #    print e
     else:
@@ -87,12 +91,13 @@ def delete_file(request, fileID):
         profile = ser = User.objects.select_related().get(id=request.user.pk).profile
         if file2del.profile == profile:
             file2del.delete()
-            return render(request, 'delete_file_success.html')
+            success = 'Se ha eliminado el archivo satisfactoriamente.'
+            return render(request, 'success.html',{'success': success})
         else:
-            e = 'Este archivo no es de tu propiedad'
-            return render(request, 'delete_file_error.html', {'error': e})
+            error = 'Este archivo no le pertenece'
+            return render(request, 'error.html', {'error':error})
     except Exception, e:
-        return render(request, 'delete_file_error.html', {'error': e})
+        return render(request, 'error.html', {'error': e})
 
 
 @login_required(login_url='/login/')
@@ -118,7 +123,8 @@ def editfile(request):
         instance.save()
         return render(request, 'editfile_success.html')
     except Exception, e:
-        return render(request, 'editfile_error.html', {'error': e})
+        error = 'No se pudieron guardar los datos'
+        return render(request, 'error.html', {'error':error})
 
 
 #  ############ PAGE RENDER ###############
