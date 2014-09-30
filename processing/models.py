@@ -10,6 +10,7 @@ from time import sleep
 from django.core.files import File as Django_File
 from django.conf import settings
 from random import randint
+import os
 
 # Opciones estáticas
 POSIBLES_ESTADOS_PROCESOS = (
@@ -155,9 +156,9 @@ class Abundance_to_Matrix(models.Model):
             os.mkdir(out_dir)
         except:
             pass
-        os.chdir(out_dir)
-        prefix = "VS".join([f.replace(".results", "") for f in files])
-        comando = "$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method RSEM  --out_prefix  %s %s" % (str(prefix), " ".join(files))
+        prefix = "VS".join([f.split("/")[-1].replace(".results", "") for f in files])
+        comando = "$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method RSEM  --out_prefix  %s/%s %s" % (str(out_dir), str(prefix), " ".join(files))
+	print comando
         p = Proceso(comando=str(comando), profile=self.profile)
         p.save()
         self.procesos.add(p)
