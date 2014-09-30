@@ -109,7 +109,7 @@ class Align_and_estimate_abundance(models.Model):
     def run_this(self, reference="", reads_1="", reads_2="", reads_se=""):
         self.name = "Experimento %s" % self.id
         self.save()
-        tmp_dir = "/tmp/aln%s"  % randint(1, 1000000)
+        tmp_dir = "/tmp/aln%s" % randint(1, 1000000)
         comando = "$TRINITY_HOME/util/align_and_estimate_abundance.pl --thread_count %s  --output_dir %s  --transcripts %s --left %s --right %s --seqType fq --est_method RSEM --aln_method bowtie --prep_reference" % (settings.CORES, tmp_dir, reference, " ".join(reads_1), " ".join(reads_2))
         p1 = Proceso(comando=str(comando), profile=self.profile)
         p1.save()
@@ -148,7 +148,13 @@ class Abundance_to_Matrix(models.Model):
         self.name = "Abundance_to_Matrix Results. Exp: %s " % self.id
         self.save()
         out_dir = "/tmp/matrix%s" % str(randint(1, 65000))
-        comando = "$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method RSEM  --out_prefix  %s %s" % (str(out_dir), " ".join(files))
+        try:
+            os.mkdir(out_dir)
+        except:
+            pass
+        os.chdir(out_dir)
+        prefix = "VS".join([f.replace(".results", "") for f in files])
+        comando = "$TRINITY_HOME/util/abundance_estimates_to_matrix.pl --est_method RSEM  --out_prefix  %s %s" % (str(prefix), " ".join(files))
         p = Proceso(comando=str(comando), profile=self.profile)
         p.save()
         self.procesos.add(p)
@@ -157,7 +163,7 @@ class Abundance_to_Matrix(models.Model):
         t1.start()
         while t1.isAlive():
             sleep(1)
-        f1 = File(fileUpload=Django_File(open(out_dir + ".counts.matrix")), description="Salida " + self.name, profile=self.profile, ext="matrix")
+        f1 = File(fileUpload=Django_File(open(out_dir + "/%s.counts.matrix" % prefix)), description="Salida " + self.name, profile=self.profile, ext="matrix")
         f1.save()
         self.out_results = f1
 
