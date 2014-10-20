@@ -35,6 +35,9 @@ class Profile(models.Model):
     firstName = models.CharField(max_length=30)
     lastName = models.CharField(max_length=30)
 
+    class Meta:
+        verbose_name_plural = 'Perfiles'
+
     def __unicode__(self):
         return unicode(self.email)
 
@@ -44,6 +47,9 @@ class File(models.Model):
     description = models.TextField(default="")
     profile = models.ForeignKey(Profile)
     ext = models.CharField(max_length=7)
+
+    class Meta:
+        verbose_name_plural = 'Archivos'
 
     def __unicode__(self):
         return u"ARCHIVO \n Location: %s \n Description: %s " % (self.fileUpload.path, self.description)
@@ -112,7 +118,6 @@ class Align_and_estimate_abundance(models.Model):
         self.save()
         tmp_dir = "/tmp/aln%s" % randint(1, 1000000)
         comando = "$TRINITY_HOME/util/align_and_estimate_abundance.pl --thread_count %s  --output_dir %s  --transcripts %s --left %s --right %s --seqType fq --est_method RSEM --aln_method bowtie --prep_reference" % (settings.CORES, tmp_dir, reference, " ".join(reads_1), " ".join(reads_2))
-	print comando
         print reads_1
         print reads_2
         p1 = Proceso(comando=str(comando), profile=self.profile)
@@ -171,6 +176,9 @@ class Abundance_to_Matrix(models.Model):
         f1.save()
         self.out_results = f1
 
+    class Meta:
+        verbose_name_plural = "Procesos de abundancia a matriz"
+
     def run(self, files=""):
         t = threading.Thread(target=self.run_this, kwargs=dict(files=files))  # Replace for bwa when ready
         t.setDaemon(True)
@@ -209,6 +217,10 @@ class Differential_Expression(models.Model):
         f1.save()
         self.out_params = f1
         self.save()
+
+
+    class Meta:
+        verbose_name_plural = "Procesos de expresion diferencial"
 
     def run(self, matrix=""):
         t = threading.Thread(target=self.run_this, kwargs=dict(matrix=matrix))  # Replace for bwa when ready
